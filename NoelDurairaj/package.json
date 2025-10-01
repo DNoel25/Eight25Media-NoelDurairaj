@@ -1,0 +1,19 @@
+{
+  "name": "noeldurairaj",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Use npm run cy:open or cy:run\"",
+    "cy:open": "cypress open",
+    "cy:run": "cypress run",
+    "cy:run:headed": "cypress run --headed --browser chrome",
+    "cy:run:mobile": "cypress run --config viewportWidth=375,viewportHeight=667"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "devDependencies": {
+    "cypress": "^15.3.0"
+  }
+}
