@@ -1,73 +1,67 @@
 describe('Contact Form', () => {
-	it('fills contact form with sample data and asserts values', () => {
-		cy.fixture('contact').then((data) => {
-			// Navigate via site UI to avoid hard-coded path differences
-			cy.visit('/');
-			cy.contains('header a, nav a, a', /contact|let.?s\s*talk/i).first().click({ force: true });
-			cy.location('pathname').should('match', /(contact|lets-talk)/i);
+  beforeEach(() => {
+    // Make sure we’re testing on a desktop viewport
+    cy.viewport(1280, 800);
+  });
 
-			// Dismiss cookie banner if present
-			cy.get('body').then(($body) => {
-				const hasConsent = $body.find('button, a').filter((_, el) => /accept|agree|got\s*it|okay|ok/i.test(el.textContent || '')).length > 0;
-				if (hasConsent) {
-					cy.contains('button, a', /accept|agree|got\s*it|okay|ok/i).click({ force: true });
-				}
-			});
+  it('fills contact form with sample data and asserts values', () => {
+    cy.fixture('contact').then((data) => {
+      // Visit homepage
+      cy.visit('/');
 
-			// Wait for any visible inputs or textareas (some pages don't use a <form>)
-			cy.get('input:visible, textarea:visible', { timeout: 10000 }).should('exist');
+      // Click on Contact or Let's Talk link
+      cy.contains('header a, nav a, a', /contact|let.?s\s*talk/i)
+        .first()
+        .click({ force: true });
 
-			const nameSelectors = [
-				'input[name*="name" i]',
-				'input[name*="full" i]',
-				'input[id*="name" i]',
-				'input[placeholder*="name" i]'
-			];
-			const emailSelectors = [
-				'input[type="email"]',
-				'input[name*="email" i]',
-				'input[id*="email" i]'
-			];
-			const messageSelectors = [
-				'textarea[name*="message" i]',
-				'textarea[id*="message" i]',
-				'textarea[placeholder*="message" i]',
-				'textarea'
-			];
+      // Confirm navigation to Contact page
+      cy.location('pathname').should('match', /(contact|lets-talk)/i);
 
-			function getByLabelOrFallback(labelRegex, fallbackSelectors) {
-				return cy.get('label', { timeout: 0 }).then(($labels) => {
-					const labels = Array.from($labels);
-					const match = labels.find((l) => labelRegex.test((l.textContent || '').trim()));
-					if (match) {
-						const forId = match.getAttribute('for');
-						if (forId) {
-							return cy.get(`#${forId}`);
-						}
-						const $candidate = Cypress.$(match)
-							.closest('label, div, section, form')
-							.find('input, textarea')
-							.first();
-						if ($candidate.length) {
-							return cy.wrap($candidate);
-						}
-					}
-					return cy.get(fallbackSelectors.join(',')).filter(':visible').first();
-				});
-			}
+      // Dismiss cookie consent banner if present
+      cy.get('body').then(($body) => {
+        const hasConsent = $body
+          .find('button, a')
+          .filter((_, el) =>
+            /accept|agree|got\s*it|okay|ok/i.test(el.textContent || '')
+          ).length > 0;
+        if (hasConsent) {
+          cy.contains('button, a', /accept|agree|got\s*it|okay|ok/i).click({ force: true });
+        }
+      });
 
-			function typeIntoField(chainable, text) {
-				chainable.scrollIntoView().clear().type(text, { delay: 0 }).should('have.value', text);
-			}
+      // Wait for visible inputs/textareas to ensure form is loaded
+      cy.get('input:visible, textarea:visible', { timeout: 10000 }).should('exist');
 
-			getByLabelOrFallback(/name|full\s*name/i, nameSelectors).then(($el) => typeIntoField(cy.wrap($el), data.name));
-			getByLabelOrFallback(/email/i, emailSelectors).then(($el) => typeIntoField(cy.wrap($el), data.email));
-			getByLabelOrFallback(/message|how\s*can\s*we\s*help/i, messageSelectors).then(($el) => typeIntoField(cy.wrap($el), data.message));
+      // Fill and assert Name field
+      cy.get('#your-name')
+        .scrollIntoView()
+        .should('be.visible')
+        .clear()
+        .type(data.name, { force: true })
+        .should('have.value', data.name);
 
-			// Ensure we did not submit and remain on a contact-like path
-			cy.location('pathname').should('match', /(contact|lets-talk)/i);
-		});
-	});
+      // Fill and assert Email field
+      cy.get('#your-email')
+        .scrollIntoView()
+        .should('be.visible')
+        .clear()
+        .type(data.email, { force: true })
+        .should('have.value', data.email);
+
+      // Fill and assert Message field (fixed selector)
+      cy.get('textarea.wpcf7-textarea') // Adjust this selector if needed based on actual form
+        .scrollIntoView()
+        .should('be.visible')
+        .clear()
+        .type(data.message, { force: true })
+        .should('have.value', data.message);
+
+      // Final confirmation that all values are correct
+      cy.get('#your-name').should('have.value', data.name);
+      cy.get('#your-email').should('have.value', data.email);
+      cy.get('textarea.wpcf7-textarea').should('have.value', data.message);
+
+      // Note: No form submission required for this test
+    });
+  });
 });
-
-
